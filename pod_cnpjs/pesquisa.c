@@ -3,7 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#define TABLE_SIZE 100003
+#define TABLE_SIZE 500009
 #define MAX_CNPJ_LENGTH 11
 #define MAX_NOME_LENGTH 100
 
@@ -43,7 +43,7 @@ void inicializarTabelas() {
     }
 }
 
-void inserirTabela(Node** table, const Empresa* emp, unsigned int (*hashFunc)(const char*)) {
+void inserirTabelaPorCNPJ(Node** table, const Empresa* emp, unsigned int (*hashFunc)(const char*)) {
     unsigned int index = hashFunc(emp->cnpj);
     Node* newNode = (Node*)malloc(sizeof(Node));
     if (newNode == NULL) {
@@ -54,6 +54,19 @@ void inserirTabela(Node** table, const Empresa* emp, unsigned int (*hashFunc)(co
     newNode->next = table[index];
     table[index] = newNode;
 }
+
+void inserirTabelaPorNome(Node** table, const Empresa* emp, unsigned int (*hashFunc)(const char*)) {
+    unsigned int index = hashFunc(emp->nome);
+    Node* newNode = (Node*)malloc(sizeof(Node));
+    if (newNode == NULL) {
+        perror("Erro ao alocar memória para novo nó");
+        exit(EXIT_FAILURE);
+    }
+    newNode->data = *emp;
+    newNode->next = table[index];
+    table[index] = newNode;
+}
+
 
 Node* buscarTabela(Node** table, const char* key, unsigned int (*hashFunc)(const char*), int isNameSearch) {
     unsigned int index = hashFunc(key);
@@ -114,8 +127,8 @@ void carregarDados(FILE* file) {
         strncpy(emp.ente_federativo, token, sizeof(emp.ente_federativo) - 1);
         emp.ente_federativo[sizeof(emp.ente_federativo) - 1] = '\0';
 
-        inserirTabela(hashTableCNPJ, &emp, hash);
-        inserirTabela(hashTableNome, &emp, hash);
+        inserirTabelaPorCNPJ(hashTableCNPJ, &emp, hash);
+        inserirTabelaPorNome(hashTableNome, &emp, hash);
     }
 }
 
@@ -141,7 +154,7 @@ int capturarOpcao() {
     int opcao;
     printf("Opcao: ");
     scanf("%d", &opcao);
-    while (getchar() != '\n');  // Limpa o buffer do stdin
+    while (getchar() != '\n');
     return opcao;
 }
 
@@ -165,12 +178,12 @@ void processarBusca(int opcao) {
         printf("Digite o CNPJ (8 digitos): ");
         fgets(input, sizeof(input), stdin);
         input[strcspn(input, "\n")] = '\0';
-        resultado = buscarTabela(hashTableCNPJ, input, hash, 0);  // 0 para busca por CNPJ
+        resultado = buscarTabela(hashTableCNPJ, input, hash, 0);
     } else if (opcao == 2) {
         printf("Digite o Nome: ");
         fgets(input, sizeof(input), stdin);
         input[strcspn(input, "\n")] = '\0';
-        resultado = buscarTabela(hashTableNome, input, hash, 1);  // 1 para busca por nome
+        resultado = buscarTabela(hashTableNome, input, hash, 1); 
     }
 
     if (resultado != NULL) {
